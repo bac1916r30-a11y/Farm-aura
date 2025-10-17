@@ -1,0 +1,230 @@
+--// WZAGRL HUB Sea 2 - Fly & Teleport GUI
+--// Author: ChatGPT Rebuild
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local RunService = game:GetService("RunService")
+
+-- ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = PlayerGui
+
+-- Main Frame
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 400, 0, 50)
+MainFrame.Position = UDim2.new(0.5, -200, 0, 100)
+MainFrame.BackgroundColor3 = Color3.fromRGB(50,50,50)
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+-- Island Button
+local IslandDropdown = Instance.new("TextButton")
+IslandDropdown.Size = UDim2.new(0,120,0,50)
+IslandDropdown.Position = UDim2.new(0,0,0,0)
+IslandDropdown.Text = "Select Island"
+IslandDropdown.Parent = MainFrame
+
+-- Fly Button
+local FlyToggleButton = Instance.new("TextButton")
+FlyToggleButton.Size = UDim2.new(0,120,0,50)
+FlyToggleButton.Position = UDim2.new(0,130,0,0)
+FlyToggleButton.Text = "Fly: OFF"
+FlyToggleButton.Parent = MainFrame
+
+-- Status Popup
+local StatusPopup = Instance.new("TextLabel")
+StatusPopup.Size = UDim2.new(0,400,0,25)
+StatusPopup.Position = UDim2.new(0.5,-200,0,70)
+StatusPopup.BackgroundColor3 = Color3.fromRGB(0,0,0)
+StatusPopup.TextColor3 = Color3.fromRGB(255,255,255)
+StatusPopup.TextScaled = true
+StatusPopup.Visible = false
+StatusPopup.Parent = ScreenGui
+
+local function ShowStatus(text)
+    StatusPopup.Text = text
+    StatusPopup.Visible = true
+    delay(3,function() StatusPopup.Visible = false end)
+end
+
+-- Islands Sea 2
+local Islands = {
+    ["Sea 2"] = {
+        ["Magma Side"] = Vector3.new(-5478.39, 30.98, -5246.91),
+        ["Ghost Island"] = Vector3.new(-5571.84, 200.18, -795.43),
+        ["Hot and Cold"] = Vector3.new(-6026.96, 20.75, -5071.96),
+        ["First Spot"] = Vector3.new(82.95, 25.07, 2834.99),
+        ["Snow Mountain"] = Vector3.new(1384.68, 470.57, -4990.10),
+        ["Green bit"] = Vector3.new(-2372.15, 80.99, -3166.51),
+        ["Cafe"] = Vector3.new(-385.25, 80.05, 297.39),
+        ["Forgotten Island"] = Vector3.new(-3043.32, 250.88, -10191.58),
+        ["Frosted Island"] = Vector3.new(5400.40, 35.22, -6236.99),
+        ["Flarningo Mansion"] = Vector3.new(-287.53, 306.17, 597.60),
+        ["Flamingo Roorn"] = Vector3.new(2284.01, 15.19, 908.03),
+        ["thuyền ma"] = Vector3.new(923.21, 135.98, 32852.83),
+        ["cửa thuyền ma"] = Vector3.new(-6505.30, 83.22, -126.66),
+    }
+}
+
+-- Instant teleport islands Sea 2
+local instantTeleportIslands = {
+    ["Flarningo Mansion"] = true,
+    ["Flamingo Roorn"] = true,
+    ["thuyền ma"] = true,
+    ["cửa thuyền ma"] = true
+}
+
+-- Sea 2 loop teleport logic
+local sea2LoopTeleport = {
+    ["raid fruit"] = {loopTarget = "Hot and Cold", loopTime = 8},
+    ["raid low"] = {loopTarget = "Hot and Cold", loopTime = 8},
+    ["Dark Ares"] = {loopTarget = "Flamingo Roorn", loopTime = 2},
+    ["Factroy"] = {loopTarget = "Flarningo Mansion", loopTime = 2}
+}
+
+local SelectedIsland = nil
+local TeleActive = false
+local teleportLoop = 2
+
+-- Teleport function
+local function TeleportToPosition(pos)
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        char.HumanoidRootPart.CFrame = CFrame.new(pos)
+    end
+end
+
+-- Sea 2 teleport loop function
+local function TeleportSea2(islandName)
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+
+    local data = sea2LoopTeleport[islandName]
+    if not data then
+        TeleportToPosition(Islands["Sea 2"][islandName])
+        ShowStatus("Đã teleport đến "..islandName)
+        return
+    end
+
+    local loopPos = Islands["Sea 2"][data.loopTarget]
+    local destPos = Islands["Sea 2"][islandName]
+
+    local startTime = tick()
+    local loopConnection
+    loopConnection = RunService.Heartbeat:Connect(function()
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.CFrame = CFrame.new(loopPos)
+        end
+        if tick() - startTime >= data.loopTime then
+            loopConnection:Disconnect()
+            if char then
+                char:BreakJoints()
+            end
+            task.wait(0.5) -- đợi respawn
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(destPos)
+            end
+            ShowStatus("Đã teleport đến "..islandName.." từ Sea 2")
+        end
+    end)
+end
+
+-- Scrollable menu
+IslandDropdown.MouseButton1Click:Connect(function()
+    if MainFrame:FindFirstChild("IslandMenu") then
+        MainFrame.IslandMenu:Destroy()
+        return
+    end
+
+    local sea = "Sea 2"
+    local menuFrame = Instance.new("Frame")
+    menuFrame.Name = "IslandMenu"
+    menuFrame.Size = UDim2.new(0,150,0,200)
+    menuFrame.Position = UDim2.new(0,0,1,0)
+    menuFrame.BackgroundColor3 = Color3.fromRGB(70,70,70)
+    menuFrame.Parent = MainFrame
+
+    local scroll = Instance.new("ScrollingFrame")
+    scroll.Size = UDim2.new(1,0,1,0)
+    scroll.CanvasSize = UDim2.new(0,0,#Islands[sea]*30)
+    scroll.ScrollBarThickness = 12
+    scroll.BackgroundTransparency = 1
+    scroll.Parent = menuFrame
+    scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+    local layout = Instance.new("UIListLayout")
+    layout.Parent = scroll
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+    for islandName,_ in pairs(Islands[sea]) do
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(1,0,0,30)
+        btn.Text = islandName
+        btn.Parent = scroll
+        btn.MouseButton1Click:Connect(function()
+            SelectedIsland = islandName
+            IslandDropdown.Text = islandName
+            menuFrame:Destroy()
+        end)
+    end
+end)
+
+-- Fly Button logic
+FlyToggleButton.MouseButton1Click:Connect(function()
+    if not SelectedIsland then
+        ShowStatus("Chọn đảo trước khi Fly!")
+        return
+    end
+
+    if TeleActive then
+        TeleActive = false
+        FlyToggleButton.Text = "Fly: OFF"
+        if teleportLoop then
+            teleportLoop:Disconnect()
+            teleportLoop = 2
+        end
+        ShowStatus("Dừng teleport")
+        return
+    end
+
+    TeleActive = true
+    FlyToggleButton.Text = "Fly: ON"
+
+    if instantTeleportIslands[SelectedIsland] then
+        TeleportToPosition(Islands["Sea 2"][SelectedIsland])
+        TeleActive = false
+        FlyToggleButton.Text = "Fly: OFF"
+        ShowStatus("Đã teleport đến "..SelectedIsland)
+        return
+    end
+
+    if sea2LoopTeleport[SelectedIsland] then
+        TeleportSea2(SelectedIsland)
+        return
+    end
+
+    -- Normal teleport (8s loop + reset)
+    local duration = 8
+    local pos = Islands["Sea 2"][SelectedIsland]
+    teleportLoop = RunService.Heartbeat:Connect(function()
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.CFrame = CFrame.new(pos)
+        end
+    end)
+    task.delay(duration, function()
+        if teleportLoop then
+            teleportLoop:Disconnect()
+            teleportLoop = 2
+        end
+        TeleActive = false
+        FlyToggleButton.Text = "Fly: OFF"
+        if LocalPlayer.Character then
+            LocalPlayer.Character:BreakJoints()
+        end
+        ShowStatus("Teleport xong, nhân vật đã reset")
+    end)
+end)
