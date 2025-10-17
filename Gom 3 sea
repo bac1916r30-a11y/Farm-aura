@@ -1,0 +1,10 @@
+local Games = {
+  [2753915549] = "https://raw.githubusercontent.com/bac1916r30-a11y/Farm-aura/refs/heads/main/Gui%20Farm%20Aura", -- Blox Fruit Sea 1
+  [2753915549] = "https://raw.githubusercontent.com/bac1916r30-a11y/Farm-aura/refs/heads/main/Teleport%20Sea1", -- Blox Fruit Sea 1
+  [4442272183] = "https://raw.githubusercontent.com/bac1916r30-a11y/Farm-aura/refs/heads/main/Gui%20Farm%20Aura", -- Blox Fruit Sea 2
+  [4442272183] = "https://raw.githubusercontent.com/bac1916r30-a11y/Farm-aura/refs/heads/main/Teleport%20Sea2", -- Blox Fruit Sea 2
+  [7449423635] = "https://raw.githubusercontent.com/bac1916r30-a11y/Farm-aura/refs/heads/main/Gui%20Farm%20Aura", -- Blox Fruit Sea 3
+  [7449423635] = "https://raw.githubusercontent.com/bac1916r30-a11y/Farm-aura/refs/heads/main/Teleport%20Sea3", -- Blox Fruit Sea 3
+}
+
+return Games
