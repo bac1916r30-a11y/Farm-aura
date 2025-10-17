@@ -1,0 +1,225 @@
+--// WZAGRL HUB v7.14 - Banana Cat Hub (Full Farm No Weapon Auto Equip, Teleport Removed)
+--// Author: ChatGPT Rebuild
+
+--// === Services ===
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local player = Players.LocalPlayer
+
+-- Character setup
+local function getChar()
+    repeat task.wait() until player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    return player.Character
+end
+local character = getChar()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+--// === Load Rayfield ===
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+--// === Window ===
+local Window = Rayfield:CreateWindow({
+    Name = "WZAGRL HUB",
+    LoadingTitle = "Wzagrl Hub",
+    LoadingSubtitle = "by ChatGPT Rebuild",
+    ConfigurationSaving = { Enabled = false },
+    Discord = { Enabled = false },
+    KeySystem = false
+})
+
+--// === Tabs ===
+local FarmTab = Window:CreateTab("⚔️ Farm", 4483362458)
+local SettingTab = Window:CreateTab("⚙️ Setting", 6031075938)
+local MiscTab = Window:CreateTab("🎲 Misc", 6031071059)
+
+--// === Notify khi load thành công ===
+Rayfield:Notify({Title="✅ WZAGRL HUB Loaded", Content="Giao diện đã khởi tạo thành công!", Duration=5})
+
+--// ======= FARM TAB =======
+FarmTab:CreateSection("🌾 Farm Features")
+getgenv().autofarm = false
+getgenv().bringAll = false
+
+-- Auto farm toggle
+FarmTab:CreateToggle({
+    Name = "🌪️ Auto Farm",
+    CurrentValue = false,
+    Flag = "FarmAura",
+    Callback = function(Value)
+        getgenv().autofarm = Value
+        if Value then startFly(); startAutoAttack(); startBusoLoop() else stopFly(); stopAutoAttack(); stopBusoLoop() end
+    end
+})
+FarmTab:CreateToggle({
+    Name = "👥 Bring All Mob",
+    CurrentValue = false,
+    Flag = "BringAll",
+    Callback = function(Value)
+        getgenv().bringAll = Value
+    end
+})
+
+--// ======= SETTINGS TAB =======
+getgenv().flySpeed = 350
+getgenv().flyHeight = 30
+getgenv().bringRange = 350
+getgenv().targetRange = 10000
+
+SettingTab:CreateSection("⚙️ Farm Settings")
+SettingTab:CreateSlider({
+    Name = "🚀 Fly Speed",
+    Range = {50, 2000},
+    Increment = 10,
+    Suffix = "",
+    CurrentValue = getgenv().flySpeed,
+    Flag = "FlySpeed",
+    Callback = function(val) getgenv().flySpeed = val end
+})
+SettingTab:CreateSlider({
+    Name = "⬆️ Fly Height",
+    Range = {1, 500},
+    Increment = 1,
+    Suffix = "",
+    CurrentValue = getgenv().flyHeight,
+    Flag = "FlyHeight",
+    Callback = function(val) getgenv().flyHeight = val end
+})
+SettingTab:CreateSlider({
+    Name = "🎯 Target Range",
+    Range = {50, 10000},
+    Increment = 50,
+    Suffix = " studs",
+    CurrentValue = getgenv().targetRange,
+    Flag = "TargetRange",
+    Callback = function(val) getgenv().targetRange = val end
+})
+SettingTab:CreateSlider({
+    Name = "🛠 Bring Range",
+    Range = {50, 1000},
+    Increment = 10,
+    Suffix = " studs",
+    CurrentValue = getgenv().bringRange,
+    Flag = "BringRange",
+    Callback = function(val) getgenv().bringRange = val end
+})
+
+--// ======= FLY LOGIC =======
+local flyLoop
+function startFly()
+    if flyLoop then flyLoop:Disconnect() end
+    character = getChar()
+    humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    local humanoid = character:WaitForChild("Humanoid")
+    humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+    flyLoop = RunService.RenderStepped:Connect(function()
+        pcall(function() humanoidRootPart.Velocity = Vector3.new(0,2,0) end)
+    end)
+end
+
+function stopFly()
+    if flyLoop then flyLoop:Disconnect() flyLoop=nil end
+    local humanoid = character:WaitForChild("Humanoid")
+    humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+end
+
+--// ======= ENEMY LOGIC =======
+function isRealEnemy(enemy)
+    if not enemy then return false end
+    local hrp = enemy:FindFirstChild("HumanoidRootPart")
+    local hum = enemy:FindFirstChild("Humanoid")
+    if not hrp or not hum then return false end
+    if hum.Health <=0 or hum.Health>hum.MaxHealth then return false end
+    if not enemy:IsDescendantOf(workspace.Enemies) then return false end
+    return true
+end
+
+function getNearestEnemy()
+    local closest, distance = nil, math.huge
+    if not workspace:FindFirstChild("Enemies") then return nil end
+    for _,v in pairs(workspace.Enemies:GetChildren()) do
+        if isRealEnemy(v) then
+            local mag = (v.HumanoidRootPart.Position - humanoidRootPart.Position).Magnitude
+            if mag<distance and mag<=getgenv().targetRange then
+                closest=v
+                distance=mag
+            end
+        end
+    end
+    return closest
+end
+
+function flyAboveTarget(target)
+    if not isRealEnemy(target) then return end
+    local targetPos = target.HumanoidRootPart.Position + Vector3.new(0,getgenv().flyHeight,0)
+    local tween = TweenService:Create(humanoidRootPart, TweenInfo.new((humanoidRootPart.Position - targetPos).Magnitude / getgenv().flySpeed, Enum.EasingStyle.Linear), {CFrame = CFrame.new(targetPos)})
+    tween:Play()
+end
+
+function bringEnemies(target)
+    if not isRealEnemy(target) then return end
+    local targetName = target.Name
+    for _,mob in pairs(workspace.Enemies:GetChildren()) do
+        if mob.Name == targetName and isRealEnemy(mob) then
+            local hrp = mob:WaitForChild("HumanoidRootPart")
+            local dist = (hrp.Position - humanoidRootPart.Position).Magnitude
+            if dist<=getgenv().bringRange then
+                task.spawn(function()
+                    local tween = TweenService:Create(hrp, TweenInfo.new((hrp.Position - target.HumanoidRootPart.Position).Magnitude / getgenv().flySpeed, Enum.EasingStyle.Linear), {CFrame = target.HumanoidRootPart.CFrame})
+                    tween:Play()
+                end)
+            end
+        end
+    end
+end
+
+-- Auto farm loop
+task.spawn(function()
+    while task.wait(0.3) do
+        if getgenv().autofarm then
+            character = getChar()
+            humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+            local target = getNearestEnemy()
+            if target and isRealEnemy(target) then
+                flyAboveTarget(target)
+                bringEnemies(target)
+            end
+        end
+    end
+end)
+
+--// ======= MISC TAB =======
+MiscTab:CreateSection("🎮 Server Tools")
+MiscTab:CreateButton({Name="🔄 Hop Server (Random)", Callback=function()
+    Rayfield:Notify({Title="🌐 Hop Server",Content="Đang tìm server ngẫu nhiên...",Duration=3})
+    task.spawn(function()
+        local PlaceID = game.PlaceId
+        local Servers = {}
+        local success,result = pcall(function()
+            local response = game:HttpGet("https://games.roblox.com/v1/games/"..PlaceID.."/servers/Public?sortOrder=Asc&limit=100")
+            return HttpService:JSONDecode(response)
+        end)
+        if success and result and result.data then
+            for _,v in pairs(result.data) do
+                if v.id~=game.JobId and v.playing<v.maxPlayers then table.insert(Servers,v.id) end
+            end
+            if #Servers>0 then TeleportService:TeleportToPlaceInstance(PlaceID,Servers[math.random(1,#Servers)],player)
+            else Rayfield:Notify({Title="⚠️ Hop Server",Content="Không tìm thấy server phù hợp.",Duration=4}) end
+        end
+    end)
+end})
+
+MiscTab:CreateButton({Name="🔁 Rejoin Server", Callback=function()
+    Rayfield:Notify({Title="♻️ Rejoin",Content="Đang vào lại server hiện tại...",Duration=3})
+    TeleportService:TeleportToPlaceInstance(game.PlaceId,game.JobId,player)
+end})
+
+-- Respawn auto reattach
+player.CharacterAdded:Connect(function()
+    task.wait(1)
+    character = getChar()
+    humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    if getgenv().autofarm then startFly() end
+end)
