@@ -1,0 +1,183 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local RunService = game:GetService("RunService")
+
+-- ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = PlayerGui
+
+-- Main Frame
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 400, 0, 50)
+MainFrame.Position = UDim2.new(0.5, -200, 0, 100)
+MainFrame.BackgroundColor3 = Color3.fromRGB(50,50,50)
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+-- Island Button
+local IslandDropdown = Instance.new("TextButton")
+IslandDropdown.Size = UDim2.new(0,120,0,50)
+IslandDropdown.Position = UDim2.new(0,0,0,0)
+IslandDropdown.Text = "Select Island"
+IslandDropdown.Parent = MainFrame
+
+-- Fly Button
+local FlyToggleButton = Instance.new("TextButton")
+FlyToggleButton.Size = UDim2.new(0,120,0,50)
+FlyToggleButton.Position = UDim2.new(0,130,0,0)
+FlyToggleButton.Text = "Fly: OFF"
+FlyToggleButton.Parent = MainFrame
+
+-- Status Popup
+local StatusPopup = Instance.new("TextLabel")
+StatusPopup.Size = UDim2.new(0,400,0,25)
+StatusPopup.Position = UDim2.new(0.5,-200,0,70)
+StatusPopup.BackgroundColor3 = Color3.fromRGB(0,0,0)
+StatusPopup.TextColor3 = Color3.fromRGB(255,255,255)
+StatusPopup.TextScaled = true
+StatusPopup.Visible = false
+StatusPopup.Parent = ScreenGui
+
+local function ShowStatus(text)
+    StatusPopup.Text = text
+    StatusPopup.Visible = true
+    delay(3,function() StatusPopup.Visible = false end)
+end
+
+-- Islands
+local Islands = {
+    ["Sea 1"] = {
+        ["Marine Start"]=Vector3.new(-2573.34,6.89,2047.00),
+        ["Start Island"]=Vector3.new(1071.28,16.31,1426.87),
+        ["Middle Town"]=Vector3.new(-655.82,7.89,1436.68),
+        ["Jungle"]=Vector3.new(-1249.77,11.89,341.36),
+        ["Pirate Village"]=Vector3.new(-1122.35,4.79,3855.92),
+        ["Desert"]=Vector3.new(1094.15,6.47,4192.89),
+        ["Frozen Village"]=Vector3.new(1198.01,27.01,-1211.73),
+        ["MarineFord"]=Vector3.new(-4505.38,20.69,4260.56),
+        ["Thành Phố đài Phun Nước"]=Vector3.new(5132.71,4.54,4037.86),
+        ["Colosseum"]=Vector3.new(-1428.35,7.39,-3014.37),
+        ["sky 1"]=Vector3.new(-4970.22,717.71,-2622.35),
+        ["sky 3"]=Vector3.new(-7952.31,5545.53,-320.70),
+        ["sky 2"]=Vector3.new(-4607.82,872.54,-1667.56),
+        ["Làng Macma"]=Vector3.new(-5231.76,8.62,8467.88),
+        ["Shank's Room"]=Vector3.new(-1442.17,29.88,-28.35),
+        ["Prison"]=Vector3.new(4854.16,8.17,740.19),
+        ["UndeyWater City"]=Vector3.new(61149.12,7.53,1870.09),
+        ["Whirlpool"]=Vector3.new(3864.69,5.41,-1926.21)
+    }
+}
+
+local instantTeleportIslands = {
+    ["UndeyWater City"]=true,
+    ["sky 2"]=true,
+    ["sky 3"]=true,
+    ["Whirlpool"]=true
+}
+
+local SelectedIsland = nil
+local TeleActive = false
+local teleportLoop = 2
+
+-- Teleport function
+local function TeleportToPosition(pos)
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        char.HumanoidRootPart.CFrame = CFrame.new(pos)
+    end
+end
+
+-- Scrollable menu
+IslandDropdown.MouseButton1Click:Connect(function()
+    if MainFrame:FindFirstChild("IslandMenu") then
+        MainFrame.IslandMenu:Destroy()
+        return
+    end
+
+    local sea = "Sea 1"
+    local menuFrame = Instance.new("Frame")
+    menuFrame.Name = "IslandMenu"
+    menuFrame.Size = UDim2.new(0,150,0,200)
+    menuFrame.Position = UDim2.new(0,0,1,0)
+    menuFrame.BackgroundColor3 = Color3.fromRGB(70,70,70)
+    menuFrame.Parent = MainFrame
+
+    local scroll = Instance.new("ScrollingFrame")
+    scroll.Size = UDim2.new(1,0,1,0)
+    scroll.CanvasSize = UDim2.new(0,0,#Islands[sea]*30)
+    scroll.ScrollBarThickness = 12
+    scroll.BackgroundTransparency = 1
+    scroll.Parent = menuFrame
+    scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+    local layout = Instance.new("UIListLayout")
+    layout.Parent = scroll
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+    for islandName,_ in pairs(Islands[sea]) do
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(1,0,0,30)
+        btn.Text = islandName
+        btn.Parent = scroll
+        btn.MouseButton1Click:Connect(function()
+            SelectedIsland = islandName
+            IslandDropdown.Text = islandName
+            menuFrame:Destroy()
+        end)
+    end
+end)
+
+-- Fly Button logic (teleport + reset 5s)
+FlyToggleButton.MouseButton1Click:Connect(function()
+    if not SelectedIsland then
+        ShowStatus("Chọn đảo trước khi Fly!")
+        return
+    end
+    if TeleActive then
+        TeleActive = false
+        FlyToggleButton.Text = "Fly: OFF"
+        ShowStatus("Dừng teleport")
+        if teleportLoop then
+            teleportLoop:Disconnect()
+            teleportLoop=2
+        end
+        return
+    end
+
+    TeleActive = true
+    FlyToggleButton.Text = "Fly: ON"
+    ShowStatus("Bắt đầu teleport "..SelectedIsland.." trong 8s")
+
+    -- Nếu instant island
+    if instantTeleportIslands[SelectedIsland] then
+        TeleportToPosition(Islands["Sea 1"][SelectedIsland])
+        TeleActive = false
+        FlyToggleButton.Text = "Fly: OFF"
+        ShowStatus("Đã teleport đến "..SelectedIsland)
+        return
+    end
+
+    -- Thời gian và reset
+    local duration = 8
+    local resetAfter = true
+    local startTime = tick()
+
+    teleportLoop = RunService.Heartbeat:Connect(function()
+        local char = LocalPlayer.Character
+        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+        char.HumanoidRootPart.CFrame = CFrame.new(Islands["Sea 1"][SelectedIsland])
+        if tick() - startTime >= duration then
+            teleportLoop:Disconnect()
+            teleportLoop = 2
+            TeleActive = false
+            FlyToggleButton.Text = "Fly: OFF"
+            if resetAfter and LocalPlayer.Character then
+                LocalPlayer.Character:BreakJoints()
+            end
+            ShowStatus("Teleport xong, nhân vật đã reset")
+        end
+    end)
+end)
