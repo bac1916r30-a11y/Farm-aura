@@ -1,15 +1,15 @@
 local Games = {
     [85211729168715] = { -- Blox Fruit Sea 1
-        gui = "https://raw.githubusercontent.com/bac1916r30-a11y/Farm-aura/refs/heads/main/Gui%20Farm%20Aura",
-        teleport = "https://raw.githubusercontent.com/bac1916r30-a11y/Farm-aura/refs/heads/main/Teleport%20Sea1"
+        gui = "https://raw.githubusercontent.com/bac1916r30-a11y/Hub/refs/heads/main/Chest",
+        teleport = "https://raw.githubusercontent.com/bac1916r30-a11y/Hub/refs/heads/main/Fly%20%C4%91%E1%BA%A3o"
     },
     [79091703265657] = { -- Blox Fruit Sea 2
-        gui = "https://raw.githubusercontent.com/bac1916r30-a11y/Farm-aura/refs/heads/main/Gui%20Farm%20Aura",
-        teleport = "https://raw.githubusercontent.com/bac1916r30-a11y/Farm-aura/refs/heads/main/Teleport%20Sea2"
+        gui = "https://raw.githubusercontent.com/bac1916r30-a11y/Hub/refs/heads/main/Chest",
+        teleport = "https://raw.githubusercontent.com/bac1916r30-a11y/Hub/refs/heads/main/Fly%20%C4%91%E1%BA%A3o"
     },
     [100117331123089] = { -- Blox Fruit Sea 3
-        gui = "https://raw.githubusercontent.com/bac1916r30-a11y/Farm-aura/refs/heads/main/Gui%20Farm%20Aura",
-        teleport = "https://raw.githubusercontent.com/bac1916r30-a11y/Farm-aura/refs/heads/main/Teleport%20Sea3"
+        gui = "https://raw.githubusercontent.com/bac1916r30-a11y/Hub/refs/heads/main/Chest",
+        teleport = "https://raw.githubusercontent.com/bac1916r30-a11y/Hub/refs/heads/main/Fly%20%C4%91%E1%BA%A3o"
     }
 }
 
