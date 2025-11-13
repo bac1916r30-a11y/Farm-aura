@@ -1,5 +1,5 @@
 local Games = {
-    [85211729168715] = { -- Blox Fruit Sea 1
+    [2753915549] = { -- Blox Fruit Sea 1
         gui = "https://raw.githubusercontent.com/bac1916r30-a11y/Hub/refs/heads/main/Chest",
         teleport = "https://raw.githubusercontent.com/bac1916r30-a11y/Hub/refs/heads/main/Fly%20%C4%91%E1%BA%A3o"
     },
