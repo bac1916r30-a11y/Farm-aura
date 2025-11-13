@@ -24,10 +24,8 @@ if Games[PlaceId] then
             loadstring(game:HttpGet(Games[PlaceId].gui))()
         end)
     end
-
     -- Đợi 2 giây trước khi load teleport
     wait(2)
-
     -- Load teleport
     if Games[PlaceId].teleport then
         pcall(function()
